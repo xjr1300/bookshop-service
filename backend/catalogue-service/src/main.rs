@@ -21,6 +21,8 @@ use std::{
     sync::LazyLock,
 };
 
+use domain::models::Book;
+
 mod book {
     tonic::include_proto!("book");
 }
@@ -29,15 +31,6 @@ use book::{
     GetBookRequest, GetBookResponse,
     catalogue_server::{Catalogue, CatalogueServer},
 };
-
-/// 書籍モデル
-#[derive(Debug, Clone)]
-struct Book {
-    pub id: i32,
-    pub title: String,
-    pub author: String,
-    pub price: i32,
-}
 
 impl From<Book> for GetBookResponse {
     fn from(value: Book) -> Self {

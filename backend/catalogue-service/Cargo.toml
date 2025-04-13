@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow = "1"
+anyhow.workspace = true
+domain = { path = "../domain" }
 prost = "0.13"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio.workspace = true
 tonic = "0.13"
 tonic-reflection = "0.13"
 

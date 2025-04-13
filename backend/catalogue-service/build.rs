@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("book_descriptor.bin");
     tonic_build::configure()
         .build_server(true)
-        .build_client(false)
+        .build_client(true)
         .file_descriptor_set_path(&descriptor_path)
         .compile_protos(&["proto/book/catalogue.proto"], &["proto/book"])?;
 

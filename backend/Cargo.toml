@@ -1,0 +1,7 @@
+[workspace]
+members = ["catalogue-service", "domain"]
+resolver = "2"
+
+[workspace.dependencies]
+anyhow = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
