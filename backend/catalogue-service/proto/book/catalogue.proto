@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package book;
+
+// Catalogueサービス
+service Catalogue {
+    rpc GetBook (GetBookRequest) returns (GetBookResponse) {}
+}
+
+// GetBookRequestメッセージ
+//
+// フィールドの番号はフィールド番号である。
+// Protocol Buffersのバイナリ形式は、データをフィールド名ではなく番号で識別する。
+//
+// フィールド番号を採用した理由は次の通りである。
+//
+// - メッセージサイズが小さくなり、軽量かつ高速になる
+// - 同じフィールド番号を使用すれば互換性を保てる
+//
+// 互換性を維持するために次に留意する必要がある。
+//
+// - 既存のフィールド番号を変更してはならない。
+// - 削除したフィールドのフィールド番号を再利用しない。
+//
+// ```proto
+// message User {
+//   string username = 1;
+//   int32  age      = 2;
+// }
+// ```
+//
+// 上記メッセージは、次のレイアウトのバイナリで送信される。
+//
+// ```text
+// [フィールド番号:1][型情報]["username"]
+// [フィールド番号:2][型情報][age]
+// ```
+message GetBookRequest {
+    int32 id = 1;
+}
+
+// GetBookResponseメッセージ
+message GetBookResponse {
+    int32 id = 1;
+    string title = 2;
+    string author = 3;
+    int32 price = 4;
+}
