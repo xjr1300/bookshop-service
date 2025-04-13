@@ -1,5 +1,5 @@
 [workspace]
-members = ["catalogue-service", "domain"]
+members = ["bff", "catalogue-service", "domain"]
 resolver = "2"
 
 [workspace.dependencies]

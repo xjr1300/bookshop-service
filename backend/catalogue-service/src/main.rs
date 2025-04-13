@@ -16,12 +16,9 @@
 //!   "price": 1000
 //! }
 //! ```
-use std::{
-    net::{SocketAddr, TcpListener},
-    sync::LazyLock,
-};
+use std::net::{SocketAddr, TcpListener};
 
-use domain::models::Book;
+use domain::models::{Book, DUMMY_BOOKS};
 
 mod book {
     tonic::include_proto!("book");
@@ -43,24 +40,6 @@ impl From<Book> for GetBookResponse {
     }
 }
 
-/// ダミーの書籍データ
-static BOOKS: LazyLock<[Book; 2]> = LazyLock::new(|| {
-    [
-        Book {
-            id: 1,
-            title: "The Awakening".into(),
-            author: "Kate Chopin".into(),
-            price: 1_000,
-        },
-        Book {
-            id: 2,
-            title: "City of Glass".into(),
-            author: "Paul Auster".into(),
-            price: 2_000,
-        },
-    ]
-});
-
 /// gRPCサーバーからのレスポンスの型
 type ApiResult<T> = Result<tonic::Response<T>, tonic::Status>;
 
@@ -80,7 +59,7 @@ impl Catalogue for CatalogueService {
 
 /// リポジトリから書籍を取得するダミー実装
 async fn get_book_by_id(_id: i32) -> Book {
-    BOOKS[0].clone()
+    DUMMY_BOOKS[0].clone()
 }
 
 /// OSに利用可能なポートを割り当ててもらう。
