@@ -25,17 +25,25 @@ mod book {
 }
 
 use book::{
-    GetBookRequest, GetBookResponse,
+    GetBookRequest, GetBookResponse, ListBooksResponse,
     catalogue_server::{Catalogue, CatalogueServer},
 };
 
-impl From<Book> for GetBookResponse {
+impl From<Book> for book::Book {
     fn from(value: Book) -> Self {
-        GetBookResponse {
+        Self {
             id: value.id,
             title: value.title,
             author: value.author,
             price: value.price,
+        }
+    }
+}
+
+impl From<Book> for GetBookResponse {
+    fn from(value: Book) -> Self {
+        GetBookResponse {
+            book: Some(value.into()),
         }
     }
 }
@@ -52,14 +60,30 @@ impl Catalogue for CatalogueService {
         &self,
         request: tonic::Request<GetBookRequest>,
     ) -> ApiResult<GetBookResponse> {
-        let book: Book = get_book_by_id(request.get_ref().id).await;
-        Ok(tonic::Response::new(book.into()))
+        let book = get_book_by_id(request.get_ref().id).await;
+        match book {
+            Some(book) => Ok(tonic::Response::new(GetBookResponse {
+                book: Some(book.into()),
+            })),
+            None => Ok(tonic::Response::new(GetBookResponse { book: None })),
+        }
+    }
+
+    async fn list_books(&self, _: tonic::Request<()>) -> ApiResult<ListBooksResponse> {
+        let books = get_books().await;
+        Ok(tonic::Response::new(ListBooksResponse {
+            books: books.into_iter().map(|book| book.into()).collect(),
+        }))
     }
 }
 
 /// リポジトリから書籍を取得するダミー実装
-async fn get_book_by_id(_id: i32) -> Book {
-    DUMMY_BOOKS[0].clone()
+async fn get_book_by_id(id: i32) -> Option<Book> {
+    Some(DUMMY_BOOKS[(id - 1) as usize].clone())
+}
+
+async fn get_books() -> Vec<Book> {
+    DUMMY_BOOKS.iter().cloned().collect()
 }
 
 /// OSに利用可能なポートを割り当ててもらう。
@@ -71,6 +95,7 @@ async fn get_book_by_id(_id: i32) -> Book {
 /// - ポート番号
 fn bind_any_port() -> std::io::Result<SocketAddr> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
+    // let listener = TcpListener::bind("127.0.0.1:59061")?;
     listener.local_addr()
 }
 
