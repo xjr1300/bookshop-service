@@ -5,10 +5,14 @@ use async_graphql::Context;
 use async_graphql::http::GraphiQLSource;
 use async_graphql::{EmptyMutation, EmptySubscription, FieldResult, Schema, SimpleObject};
 use async_graphql_axum::GraphQL;
-use axum::{Router, response::IntoResponse, routing};
+use axum::http::{HeaderValue, Method};
+use axum::response::IntoResponse;
+use axum::{Router, routing};
 use clap::Parser;
+use hyper::header;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tower_http::cors::CorsLayer;
 
 use catalogue_service::book::{Book as CatalogueBook, CatalogueClient, GetBookRequest};
 
@@ -81,10 +85,21 @@ async fn main() -> anyhow::Result<()> {
     let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
         .data(app_state)
         .finish();
-    let app = Router::new().route(
-        "/",
-        routing::get(graphiql).post_service(GraphQL::new(schema)),
-    );
+
+    let origins = [HeaderValue::from_static("http://localhost:5173")];
+    let cors_layer = CorsLayer::new()
+        .allow_origin(origins)
+        //.allow_credentials(true)
+        .allow_headers([header::CONTENT_TYPE])
+        .allow_methods([Method::GET, Method::POST]);
+
+    let app = Router::new()
+        .route(
+            "/",
+            routing::get(graphiql).post_service(GraphQL::new(schema.clone())),
+        )
+        .route_service("/graphql", GraphQL::new(schema))
+        .layer(cors_layer);
 
     println!("GraphiQL IDE: http://localhost:4000");
 
