@@ -14,7 +14,7 @@ use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
-use catalogue_service::book::{Book as CatalogueBook, CatalogueClient, GetBookRequest};
+use catalogue::book::{Book as CatalogueBook, CatalogueClient, GetBookRequest};
 
 #[derive(SimpleObject)]
 struct BookObject {

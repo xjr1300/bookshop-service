@@ -320,7 +320,7 @@ dependencies = [
  "async-graphql",
  "async-graphql-axum",
  "axum",
- "catalogue-service",
+ "catalogue",
  "clap",
  "domain",
  "hyper",
@@ -355,7 +355,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "catalogue-service"
+name = "catalogue"
 version = "0.1.0"
 dependencies = [
  "anyhow",

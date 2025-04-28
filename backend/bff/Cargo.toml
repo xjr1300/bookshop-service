@@ -8,7 +8,7 @@ anyhow.workspace = true
 async-graphql = "7"
 async-graphql-axum = "7"
 axum = "0.8"
-catalogue-service = { path = "../catalogue-service" }
+catalogue = { path = "../catalogue" }
 clap.workspace = true
 domain = { path = "../domain" }
 hyper = "1.6.0"
