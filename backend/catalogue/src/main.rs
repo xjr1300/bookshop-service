@@ -18,16 +18,17 @@
 //! ```
 use std::net::{SocketAddr, TcpListener};
 
-use domain::models::{Book, DUMMY_BOOKS};
-
-mod book {
-    tonic::include_proto!("book");
-}
+use clap::Parser;
 
 use book::{
     GetBookRequest, GetBookResponse, ListBooksResponse,
     catalogue_server::{Catalogue, CatalogueServer},
 };
+use domain::models::{Book, DUMMY_BOOKS};
+
+mod book {
+    tonic::include_proto!("book");
+}
 
 impl From<Book> for book::Book {
     fn from(value: Book) -> Self {
@@ -86,6 +87,14 @@ async fn get_books() -> Vec<Book> {
     DUMMY_BOOKS.iter().cloned().collect()
 }
 
+/// コマンドライン引数
+#[derive(Debug, Parser)]
+struct Args {
+    /// リスニングポート
+    #[clap(long)]
+    port: Option<u16>,
+}
+
 /// OSに利用可能なポートを割り当ててもらう。
 ///
 /// macOSでは、gRPCのデフォルトポートである50051を`launchd`が使用しているため、別のポートを使用する。
@@ -95,13 +104,16 @@ async fn get_books() -> Vec<Book> {
 /// - ポート番号
 fn bind_any_port() -> std::io::Result<SocketAddr> {
     let listener = TcpListener::bind("127.0.0.1:0")?;
-    // let listener = TcpListener::bind("127.0.0.1:59061")?;
     listener.local_addr()
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let socket = bind_any_port().map_err(|e| anyhow::anyhow!(e))?;
+    let args = Args::parse();
+    let socket = match args.port {
+        Some(port) => SocketAddr::from(([0, 0, 0, 0], port)),
+        None => bind_any_port()?,
+    };
     let catalogue_service = CatalogueService;
 
     println!("Listen: {}", socket);
@@ -110,8 +122,7 @@ async fn main() -> anyhow::Result<()> {
         .register_encoded_file_descriptor_set(tonic::include_file_descriptor_set!(
             "book_descriptor"
         ))
-        .build_v1()
-        .map_err(|e| anyhow::anyhow!(e))?;
+        .build_v1()?;
 
     tonic::transport::Server::builder()
         .add_service(CatalogueServer::new(catalogue_service))

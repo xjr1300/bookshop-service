@@ -1,0 +1,11 @@
+FROM rust:1.86-slim AS builder
+WORKDIR /backend
+COPY . .
+RUN apt update && apt install -y protobuf-compiler
+RUN cargo build --package=bff --release
+
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY --from=builder /backend/target/release/bff .
+EXPOSE 4000
+CMD ["./bff", "--catalogue-port=50051"]

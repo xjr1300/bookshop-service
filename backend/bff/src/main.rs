@@ -1,18 +1,16 @@
-use std::net::{Ipv4Addr, SocketAddrV4};
 use std::sync::Arc;
 
 use async_graphql::Context;
 use async_graphql::http::GraphiQLSource;
 use async_graphql::{EmptyMutation, EmptySubscription, FieldResult, Schema, SimpleObject};
 use async_graphql_axum::GraphQL;
-use axum::http::{HeaderValue, Method};
 use axum::response::IntoResponse;
 use axum::{Router, routing};
 use clap::Parser;
 use hyper::header;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 
 use catalogue::book::{Book as CatalogueBook, CatalogueClient, GetBookRequest};
 
@@ -64,34 +62,43 @@ async fn graphiql() -> impl IntoResponse {
     axum::response::Html(GraphiQLSource::build().endpoint("/").finish())
 }
 
-/// コマンドライン引数
 #[derive(Debug, Parser)]
 struct Args {
-    /// カタログサービスリッスンポート
+    /// カタログサービスリスニングポート
     #[clap(long)]
-    port: u16,
+    catalogue_port: Option<u16>,
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // 環境変数CATALOGUE_CLIENT_URIが設定されている場合は、それを使用する。
+    // 設定されていない場合は、localhostのコマンドライン引数またはデフォルトのポート50051を使用する。
     let args = Args::parse();
-    let catalogue_address = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), args.port);
+    let client_address = match std::env::var("CATALOGUE_CLIENT_URI") {
+        Ok(uri) => uri,
+        Err(_) => match args.catalogue_port {
+            Some(port) => format!("localhost:{port}"),
+            None => "localhost:50051".to_string(),
+        },
+    };
+    println!("Catalogue service address: {client_address}");
 
-    let catalogue_client = CatalogueClient::connect(format!("http://{}", catalogue_address))
+    let catalogue_client = CatalogueClient::connect(format!("http://{}", client_address))
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
+    println!("Catalogue client created");
     let app_state = Arc::new(Mutex::new(AppState { catalogue_client }));
 
     let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
         .data(app_state)
         .finish();
 
-    let origins = [HeaderValue::from_static("http://localhost:5173")];
+    // let origins = [HeaderValue::from_static("http://localhost:5173")];
     let cors_layer = CorsLayer::new()
-        .allow_origin(origins)
-        //.allow_credentials(true)
-        .allow_headers([header::CONTENT_TYPE])
-        .allow_methods([Method::GET, Method::POST]);
+        .allow_origin(Any)
+        //.allow_methods([Method::GET, Method::POST])
+        .allow_methods(Any)
+        .allow_headers([header::CONTENT_TYPE]);
 
     let app = Router::new()
         .route(
