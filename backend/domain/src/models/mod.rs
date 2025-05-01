@@ -1,5 +1,7 @@
 use std::sync::LazyLock;
 
+use serde::{Deserialize, Serialize};
+
 /// 書籍モデル
 #[derive(Debug, Clone)]
 pub struct Book {
@@ -26,3 +28,22 @@ pub static DUMMY_BOOKS: LazyLock<[Book; 2]> = LazyLock::new(|| {
         },
     ]
 });
+
+/// 注文商品
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderItem {
+    pub item_id: u64,
+    pub quantity: u32,
+    pub unit_price: u32,
+}
+
+/// 注文イベント
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OrderEvent {
+    pub id: String,
+    pub customer_id: String,
+    pub customer_name: String,
+    pub order_items: Vec<OrderItem>,
+}

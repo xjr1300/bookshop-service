@@ -1,0 +1,15 @@
+[package]
+name = "shipping"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+deadpool-lapin.workspace = true
+domain = { path = "../domain" }
+futures-lite.workspace = true
+num_cpus.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+utils = { path = "../utils" }
